@@ -1,38 +1,26 @@
-const express = require ('express')
+const express = require('express')
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
 
-
-router.post('/login', (req, res) => {
-    console.log('recebido no backend /api/login' )
-    const { username, password } = req.body
-
-    if (username && password) { 
-        res.json({ success: true, message: 'usuario logado com sucesso!' , username: username, password:password })
-    } else { 
-        res.status(400).json ({ success: false, message: 'usuario ou senha nao fornecidos' })
-    }
-})
-
 router.post('/register', async (req, res) => {
-    if (!req.body ) {
-        return res.json({ message: "Erro: nenhum corpo enviado" });
-    }
+    const { email, usuario, password, role, cargaHoraria } = req.body;
 
-    const { email, username, password, role, cargaHoraria } = req.body;
-
-    if (!email || !username || !password || !role || !cargaHoraria) {
+    if (!email || !usuario || !password || !role || !cargaHoraria) {
         return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios' });
     }
 
     try {
+        const bcrypt = require('bcrypt');
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const newUser = await prisma.user.create({
             data: {
                 email: email,
-                username: usuario,
-                password: password,
+                usuario: usuario,
+                password: hashedPassword,
                 role: role,
                 cargaHoraria: parseInt(cargaHoraria),
             },
@@ -42,6 +30,45 @@ router.post('/register', async (req, res) => {
     } catch (error) {
         console.error('Erro ao criar usuário:', error);
         res.status(500).json({ success: false, message: 'Erro ao criar usuário', error: error.message });
+    }
+});
+
+router.post('/login', async (req, res) => {
+    console.log('Testando no backend /api/login')
+
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'email ou senha não fornecidos' });
+    }
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email: email }
+        });
+
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'usuário não encontrado' });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user.password);
+
+        if (passwordMatch) {
+            console.log('Usuario logado!')
+            return res.json({
+                success: true,
+                message: "Usuário logado com sucesso",
+                role: user.role,
+                usuario: user.usuario
+            });
+        } else {
+            console.log('senha incorreta')
+            return res.status(401).json({ success: false, message: "Senha incorreta" });
+        }
+
+    } catch (error) {
+        console.error("Erro ao tentar logar:", error);
+        return res.status(500).json({ success: false, message: 'Erro interno no servidor' });
     }
 });
 

@@ -2,21 +2,43 @@ import { useState } from "react";
 
 function FormLogin() {
 
-    const [username, setUsername] = useState('')
+    const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [error, setError] = useState('')
 
-    const handlelogin = (event) => {
+
+
+    const handlelogin = async (event) => {
         event.preventDefault();
-        console.log('Tentativo de login de usuario:', username, "e senha:", password)
-    }
-
-
+        setError('');
+    
+        try {
+            const response = await fetch('http://localhost:3001/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+    
+            const data = await response.json();
+            if (response.ok && data.success) {
+                console.log('Usuário logado com sucesso');
+            } else {
+                console.log('Usuário ou senha inválidos.')
+                setError(data.message || 'Usuário ou senha inválidos.');
+            }
+        } catch (error) {
+            setError('Não foi possível conectar ao servidor. Tente novamente mais tarde.');
+        }
+    };
+    
     return ( 
         <main className="h-screen flex items-center justify-center">
             <form action="" onSubmit={handlelogin} className="bg-white flex h-[500px] w-[800px] items-center rounded-md font-[Sansation]">
                 <div className="flex flex-col items-center justify-center w-[400px] h-[300px] gap-[10px] ">
                     <h2 className="font-bold text-[24px]">Login</h2> 
-                    <input type="text" name="fakeuser" value={username} onChange={(e) => setUsername (e.target.value)} autocomplete="off" placeholder="Enter Username" className="p-[6px] w-[90%] h-[30px] bg-[#EFEFEF] rounded-sm focus:border border-solid transition-colors duration-200 border-[#a9cfe5] outline-none"/>
+                    <input type="text" name="Email" value={email} onChange={(e) => setEmail (e.target.value)} autocomplete="off" placeholder="Enter Email" className="p-[6px] w-[90%] h-[30px] bg-[#EFEFEF] rounded-sm focus:border border-solid transition-colors duration-200 border-[#a9cfe5] outline-none"/>
                     <input type="password" value={password} onChange={(e) => setPassword (e.target.value)} autoComplete="new-password" placeholder="Enter Password" className=" p-[6px]  w-[90%] h-[30px] bg-[#EFEFEF] rounded-sm focus:border border-solid transition-colors duration-200 border-[#a9cfe5] outline-none"/>
                     <button type="submit" className="text-white text-[18px] bg-[#021B33] w-[90%] h-[50px] cursor-pointer hover:bg-[#12577b] rounded-sm">Login</button>
                 </div>
