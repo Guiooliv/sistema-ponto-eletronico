@@ -39,7 +39,7 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return res.status(400).json({ success: false, message: 'email ou senha não fornecidos' });
+        return res.status(400).json({ success: false, message: 'E-mail ou senha não fornecidos' });
     }
 
     try {
@@ -48,7 +48,7 @@ router.post('/login', async (req, res) => {
         });
 
         if (!user) {
-            return res.status(401).json({ success: false, message: 'usuário não encontrado' });
+            return res.status(401).json({ success: false, message: 'E-mail ou senha incorretos' });
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
