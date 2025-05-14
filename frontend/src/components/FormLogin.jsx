@@ -1,22 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function FormLogin() {
-
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [error, setError] = useState('')
-
-    useEffect(() => {
-        let timerId;
-        if (error) {
-            timerId = setTimeout(() => {
-                setError('');
-            }, 5000)
-        }
-        return () => {
-            clearTimeout(timerId);
-        }
-    }, [error])
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
+    const { login } = useAuth();
 
     const handlelogin = async (event) => {
         event.preventDefault();
@@ -33,11 +24,23 @@ function FormLogin() {
 
             const data = await response.json();
 
-            if (!response.ok) {
-                console.log('Usuário ou senha inválidos.')
+            if (response.ok && data.success) {
+                console.log('Usuário logado com sucesso:', data);
+                login({
+                    id: data.userId,
+                    email: email,
+                    role: data.role,
+                    usuario: data.usuario
+                });
+                if (data.role === 'admin') {
+                    navigate('/registro');
+                }
+            } else {
+                console.log('Falha no login - Resposta não OK ou data.success falso:', data);
                 setError(data.message || 'Usuário ou senha inválidos.');
             }
-        } catch (error) {
+        } catch (err) {
+            console.error('Erro de conexão:', err);
             setError('Erro de conexão com servidor. Tente novamente mais tarde.');
         }
     };
@@ -66,4 +69,4 @@ function FormLogin() {
         </main>
     );
 }
-export default FormLogin;
+export default FormLogin
